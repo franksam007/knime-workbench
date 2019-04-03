@@ -28,6 +28,11 @@ properties([
     stringParam(
       name: 'KNIME_JS_CORE_P2',
       defaultValue: '$P2_REPO/knime-js-core/' + env.BRANCH_NAME.replaceAll("/", "%252F") + '/repository/',
+      description: 'KNIME JS Core P2 update site url.'
+	),
+    stringParam(
+      name: 'KNIME_JAVASNIPPET_P2',
+      defaultValue: '$P2_REPO/knime-javasnippet/' + env.BRANCH_NAME.replaceAll("/", "%252F") + '/repository/',
       description: 'KNIME Javasnippet P2 update site url.'
     ),
     stringParam(
