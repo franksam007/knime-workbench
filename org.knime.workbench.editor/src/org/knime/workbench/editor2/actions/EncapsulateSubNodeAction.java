@@ -48,7 +48,6 @@ package org.knime.workbench.editor2.actions;
 import java.util.Optional;
 
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.knime.core.node.NodeLogger;
 import org.knime.workbench.KNIMEEditorPlugin;
 import org.knime.workbench.core.util.ImageRepository;
 import org.knime.workbench.editor2.WorkflowEditor;
@@ -62,8 +61,6 @@ import org.knime.workbench.editor2.editparts.NodeContainerEditPart;
  * @author Bernd Wiswedel, KNIME AG, Zurich, Switzerland
  */
 public class EncapsulateSubNodeAction extends AbstractNodeAction {
-
-    private static final NodeLogger LOGGER = NodeLogger.getLogger(EncapsulateSubNodeAction.class);
 
     /** unique ID for this action. */
     public static final String ID = "knime.action.encapsulatesubnode";
@@ -118,7 +115,7 @@ public class EncapsulateSubNodeAction extends AbstractNodeAction {
         if (parts.length < 1) {
             return false;
         }
-        return !getManager().isWriteProtected();
+        return !getManagerUI().isWriteProtected();
     }
 
     /**
@@ -128,7 +125,7 @@ public class EncapsulateSubNodeAction extends AbstractNodeAction {
      */
     @Override
     public void runInSWT() {
-        Optional<CollapseMetaNodeCommand> cmd = CollapseMetaNodeCommand.create(getManager(),
+        Optional<CollapseMetaNodeCommand> cmd = CollapseMetaNodeCommand.create(getManagerUI(),
             getSelectedParts(NodeContainerEditPart.class), getSelectedParts(AnnotationEditPart.class), true);
         if (cmd.isPresent()) {
             getCommandStack().execute(cmd.get());
@@ -146,6 +143,14 @@ public class EncapsulateSubNodeAction extends AbstractNodeAction {
     @Override
     public void runOnNodes(final NodeContainerEditPart[] nodeParts) {
         throw new IllegalStateException("Not to be called as runInSWT is overwritten.");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected boolean canHandleWorkflowManagerUI() {
+        return true;
     }
 
 }

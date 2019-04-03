@@ -59,9 +59,9 @@ import org.eclipse.swt.widgets.MessageBox;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.node.workflow.NodeID;
 import org.knime.core.node.workflow.WorkflowAnnotation;
-import org.knime.core.node.workflow.WorkflowManager;
 import org.knime.core.node.workflow.action.CollapseIntoMetaNodeResult;
 import org.knime.core.node.workflow.action.MetaNodeToSubNodeResult;
+import org.knime.core.ui.node.workflow.WorkflowManagerUI;
 import org.knime.core.util.SWTUtilities;
 import org.knime.workbench.editor2.AnnotationUtilities;
 import org.knime.workbench.editor2.editparts.AnnotationEditPart;
@@ -89,7 +89,7 @@ public class CollapseMetaNodeCommand extends AbstractKNIMECommand {
      * @param annos the workflow annotations to collapse
      * @param name of new metanode
      */
-    private CollapseMetaNodeCommand(final WorkflowManager wfm,
+    private CollapseMetaNodeCommand(final WorkflowManagerUI wfm,
             final NodeID[] nodes, final WorkflowAnnotation[] annos,
             final String name, final boolean encapsulateAsSubnode) {
         super(wfm);
@@ -105,7 +105,7 @@ public class CollapseMetaNodeCommand extends AbstractKNIMECommand {
         if (!super.canExecute()) {
             return false;
         }
-        return null == getHostWFM().canCollapseNodesIntoMetaNode(m_nodes);
+        return null == getHostWFMUI().canCollapseNodesIntoMetaNode(m_nodes);
     }
 
     /**
@@ -114,9 +114,9 @@ public class CollapseMetaNodeCommand extends AbstractKNIMECommand {
     @Override
     public void execute() {
         try {
-            m_collapseResult = getHostWFM().collapseIntoMetaNode(m_nodes, m_annos, m_name);
+            m_collapseResult = getHostWFMUI().collapseIntoMetaNode(m_nodes, m_annos, m_name);
             if (m_encapsulateAsSubnode) {
-                m_metaNodeToSubNodeResult = getHostWFM().convertMetaNodeToSubNode(
+                m_metaNodeToSubNodeResult = getHostWFMUI().convertMetaNodeToSubNode(
                     m_collapseResult.getCollapsedMetanodeID());
             }
         } catch (Exception e) {
@@ -163,7 +163,7 @@ public class CollapseMetaNodeCommand extends AbstractKNIMECommand {
      * @param encapsulateAsSubnode TODO
      * @return an Optional Command
      */
-    public static Optional<CollapseMetaNodeCommand> create(final WorkflowManager manager,
+    public static Optional<CollapseMetaNodeCommand> create(final WorkflowManagerUI manager,
         final NodeContainerEditPart[] nodeParts, final AnnotationEditPart[] annoParts,
         final boolean encapsulateAsSubnode) {
 

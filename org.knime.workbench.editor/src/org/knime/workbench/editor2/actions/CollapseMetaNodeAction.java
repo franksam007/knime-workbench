@@ -131,7 +131,7 @@ public class CollapseMetaNodeAction extends AbstractNodeAction {
      */
     @Override
     public void runInSWT() {
-        Optional<CollapseMetaNodeCommand> cmd = CollapseMetaNodeCommand.create(getManager(),
+        Optional<CollapseMetaNodeCommand> cmd = CollapseMetaNodeCommand.create(getManagerUI(),
             getSelectedParts(NodeContainerEditPart.class), getSelectedParts(AnnotationEditPart.class), false);
         if (cmd.isPresent()) {
             getCommandStack().execute(cmd.get());
@@ -150,6 +150,14 @@ public class CollapseMetaNodeAction extends AbstractNodeAction {
     @Override
     public void runOnNodes(final NodeContainerEditPart[] nodeParts) {
         throw new IllegalStateException("Not to be called as runInSWT is overwritten.");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected boolean canHandleWorkflowManagerUI() {
+        return true;
     }
 
 }
