@@ -1,5 +1,6 @@
 /*
  * ------------------------------------------------------------------------
+ *
  *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
@@ -40,46 +41,79 @@
  *  propagated with or for interoperation with KNIME.  The owner of a Node
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
- * ------------------------------------------------------------------------
+ * ---------------------------------------------------------------------
+ *
+ * History
+ *   May 24, 2019 (loki): created
  */
-package org.knime.workbench.ui.preferences;
+package org.knime.workbench.descriptionview.workflowmeta;
 
-import org.eclipse.jface.preference.FieldEditorPreferencePage;
-import org.eclipse.jface.preference.FileFieldEditor;
-import org.eclipse.jface.preference.IPreferenceStore;
-import org.eclipse.ui.IWorkbench;
-import org.eclipse.ui.IWorkbenchPreferencePage;
-import org.knime.workbench.ui.KNIMEUIPlugin;
-import org.knime.workbench.ui.workflow.metadata.MetaInfoFile;
+import java.util.ArrayList;
 
 /**
- * @author Fabian Dill, KNIME.com AG
+ * This class embodies a license which may be applied to a workflow; it is non-instantiable outside of this class and
+ * presently all license types are hard coded. Ideally this class has a static block that reads a properties file and
+ * instantiates instances based on that.
+ *
+ * @author loki der quaeler
  */
-public class MetaInfoPreferencePage extends FieldEditorPreferencePage implements IWorkbenchPreferencePage {
+public class LicenseType {
     /**
-     * {@inheritDoc}
+     * @return the available licenses
      */
-    @Override
-    protected void createFieldEditors() {
-        addField(new FileFieldEditor(
-                MetaInfoFile.PREF_KEY_META_INFO_TEMPLATE_WF,
-                "Meta Info Template for workflows:", true,
-                getFieldEditorParent()));
-
-        addField(new FileFieldEditor(
-                MetaInfoFile.PREF_KEY_META_INFO_TEMPLATE_WFS,
-                "Meta Info Template for workflow sets:", true,
-                getFieldEditorParent()));
+    public static ArrayList<LicenseType> getAvailableLicenses() {
+        return AVAILABLE_LICENSES;
     }
 
     /**
-     * {@inheritDoc}
+     * @param name the display name of a license
+     * @return the index within AVAILABLE_LICENSES or -1 if one could not be matched
      */
-    @Override
-    public void init(final IWorkbench workbench) {
-        IPreferenceStore prefStore = KNIMEUIPlugin.getDefault().getPreferenceStore();
-        prefStore.setDefault(MetaInfoFile.PREF_KEY_META_INFO_TEMPLATE_WF, "");
-        prefStore.setDefault(MetaInfoFile.PREF_KEY_META_INFO_TEMPLATE_WFS, "");
-        setPreferenceStore(prefStore);
+    public static int getIndexForLicenseWithName(final String name) {
+        for (int i = 0; i < AVAILABLE_LICENSES.size(); i++) {
+            if (AVAILABLE_LICENSES.get(i).getDisplayName().equals(name)) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private static final ArrayList<LicenseType> AVAILABLE_LICENSES;
+
+    static {
+        AVAILABLE_LICENSES = new ArrayList<>();
+
+        AVAILABLE_LICENSES.add(new LicenseType("<None>", "https://opensource.org/licenses/category"));
+        AVAILABLE_LICENSES.add(new LicenseType("Apache-2.0", "https://www.apache.org/licenses/LICENSE-2.0.html"));
+        AVAILABLE_LICENSES.add(new LicenseType("CC-BY-4.0", "https://creativecommons.org/licenses/by/4.0/"));
+        AVAILABLE_LICENSES
+            .add(new LicenseType("EUPL-1.2", "https://joinup.ec.europa.eu/collection/eupl/eupl-text-11-12"));
+        AVAILABLE_LICENSES.add(new LicenseType("MIT", "https://opensource.org/licenses/MIT"));
+        AVAILABLE_LICENSES.add(new LicenseType("GPL v3", "https://www.gnu.org/licenses/gpl-3.0.en.html"));
+    }
+
+
+
+    private final String m_displayName;
+    private final String m_url;
+
+    private LicenseType(final String name, final String url) {
+        m_displayName = name;
+        m_url = url;
+    }
+
+    /**
+     * @return the displayName
+     */
+    public String getDisplayName() {
+        return m_displayName;
+    }
+
+    /**
+     * @return the url
+     */
+    public String getURL() {
+        return m_url;
     }
 }

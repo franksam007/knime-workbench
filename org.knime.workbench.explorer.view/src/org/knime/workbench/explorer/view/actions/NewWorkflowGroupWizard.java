@@ -54,10 +54,9 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.knime.workbench.explorer.filesystem.AbstractExplorerFileStore;
 import org.knime.workbench.explorer.filesystem.LocalExplorerFileStore;
-import org.knime.workbench.ui.metainfo.model.MetaInfoFile;
+import org.knime.workbench.ui.workflow.metadata.MetaInfoFile;
 
 /**
- *
  * @author ohl, University of Konstanz
  */
 public class NewWorkflowGroupWizard extends NewWorkflowWizard {
@@ -65,7 +64,6 @@ public class NewWorkflowGroupWizard extends NewWorkflowWizard {
     /**
      * Creates the wizard.
      *
-     * @param spaceProvider the content provider to create a group in
      * @since 3.0
      */
     public NewWorkflowGroupWizard() {
@@ -111,7 +109,7 @@ public class NewWorkflowGroupWizard extends NewWorkflowWizard {
                 // strange - can't create meta info file then
                 return;
             }
-            MetaInfoFile.createMetaInfoFile(locFile, false);
+            MetaInfoFile.createOrGetMetaInfoFile(locFile, false);
         }
 
         // Refresh parent of the newly created workflow group.

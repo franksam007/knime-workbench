@@ -1,5 +1,6 @@
 /*
  * ------------------------------------------------------------------------
+ *
  *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
@@ -40,77 +41,59 @@
  *  propagated with or for interoperation with KNIME.  The owner of a Node
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
- * ------------------------------------------------------------------------
+ * ---------------------------------------------------------------------
+ *
+ * History
+ *   May 26, 2019 (loki): created
  */
-package org.knime.workbench.ui.metainfo.model;
-
-import javax.xml.transform.sax.TransformerHandler;
-
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.ModifyEvent;
-import org.eclipse.swt.events.ModifyListener;
-import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Text;
-import org.eclipse.ui.forms.widgets.FormToolkit;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.AttributesImpl;
+package org.knime.workbench.ui.workflow.metadata;
 
 /**
- * 
- * @author Fabian Dill, KNIME.com AG
+ * This is a class of static constants used in our XML storage of workflow metadata.
+ *
+ * TODO no one seems able to locate a DTD for this file - one should be made just to cross the t's and dot the i's.
+ *
+ * @author loki der quaeler
  */
-public class TextMetaGUIElement extends MetaGUIElement {
-    
-    private static final String FORM_TYPE = "text";
-    
-    public TextMetaGUIElement(final String label, final String value, 
-            final boolean isReadOnly) {
-        super(label, value, isReadOnly);
-    }
+public class MetadataXML {
+    /** The singular valid element name in this namespace */
+    public static final String ELEMENT = "element";
 
     /**
-     * {@inheritDoc}
+     * Attribute name for the UI element descriptor; this is a holdover from pre-3.8.0 metadata storage and is basically
+     * useless now as we craft the UI on what metadata type we are displaying
      */
-    @Override
-    public Control createGUIElement(final FormToolkit toolkit, 
-            final Composite parent) { 
+    public static final String FORM = "form";
 
-            Text text = toolkit.createText(parent, getValue().trim(),
-                    SWT.BORDER | SWT.FILL);
-            text.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-            text.addModifyListener(new ModifyListener() {
-                @Override
-                public void modifyText(final ModifyEvent e) {
-                    fireModifiedEvent(e);
-                }
-            });
-            text.setEnabled(!isReadOnly());
-            setControl(text);
-            return text;
-    }
-    
-    private Text getTextControl() {
-        return (Text)getControl();
-    }
+    /** Attribute name for the display label of this element */
+    public static final String NAME = "name";
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void saveTo(final TransformerHandler parentElement) 
-        throws SAXException {
-        AttributesImpl atts = new AttributesImpl();
-        atts.addAttribute(null, null, MetaGUIElement.FORM, "CDATA", 
-                FORM_TYPE);
-        atts.addAttribute(null, null, MetaGUIElement.READ_ONLY, "CDATA", 
-                "" + isReadOnly());
-        atts.addAttribute(null, null, MetaGUIElement.NAME, "CDATA", getLabel());
-        parentElement.startElement(null, null, MetaGUIElement.ELEMENT, atts);
-        char[] value = getTextControl().getText().trim().toCharArray();
-        parentElement.characters(value, 0, value.length);
-        parentElement.endElement(null, null, MetaGUIElement.ELEMENT);
-    }
+    /** Attribute name for the metadata type of this element */
+    public static final String TYPE = "type";
 
+    /** Attribute name for the "read-only" attribute. */
+    public static final String READ_ONLY = "read-only";
+
+    /** Valid 'form' attribute value for pulldowns */
+    public static final String COMBOBOX = "pulldown";
+
+    /** Valid 'form' attribute value for dates - currently unused */
+    public static final String DATE = "date";
+
+    /** Valid 'form' attribute value for text areas */
+    public static final String MULTILINE = "multiline";
+
+    /** Valid 'form' attribute value for text fields */
+    public static final String TEXT = "text";
+
+    /** Valid 'form' attribute value for url links */
+    public static final String URL = "url-link";
+
+    /** This must be present when form == URL; ideally we'd expand the DTD to have more elements than just 'element' */
+    public static final String URL_TYPE_ATTRIBUTE = "url-type";
+    /** This must be present when form == URL; ideally we'd expand the DTD to have more elements than just 'element' */
+    public static final String URL_URL_ATTRIBUTE = "url-url";
+
+
+    private MetadataXML() { }
 }

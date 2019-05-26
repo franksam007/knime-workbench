@@ -1,5 +1,6 @@
 /*
  * ------------------------------------------------------------------------
+ *
  *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
@@ -40,46 +41,68 @@
  *  propagated with or for interoperation with KNIME.  The owner of a Node
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
- * ------------------------------------------------------------------------
+ * ---------------------------------------------------------------------
+ *
+ * History
+ *   May 26, 2019 (loki): created
  */
-package org.knime.workbench.ui.preferences;
+package org.knime.workbench.descriptionview.workflowmeta;
 
-import org.eclipse.jface.preference.FieldEditorPreferencePage;
-import org.eclipse.jface.preference.FileFieldEditor;
-import org.eclipse.jface.preference.IPreferenceStore;
-import org.eclipse.ui.IWorkbench;
-import org.eclipse.ui.IWorkbenchPreferencePage;
-import org.knime.workbench.ui.KNIMEUIPlugin;
-import org.knime.workbench.ui.workflow.metadata.MetaInfoFile;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.ui.PlatformUI;
 
 /**
- * @author Fabian Dill, KNIME.com AG
+ * This is a place holder to be displayed in the Description when the workflow editor is currently editing a metanode as
+ * opposed to the root workflow.
+ *
+ * @author loki der quaeler
  */
-public class MetaInfoPreferencePage extends FieldEditorPreferencePage implements IWorkbenchPreferencePage {
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void createFieldEditors() {
-        addField(new FileFieldEditor(
-                MetaInfoFile.PREF_KEY_META_INFO_TEMPLATE_WF,
-                "Meta Info Template for workflows:", true,
-                getFieldEditorParent()));
+public class MetanodeMetaView extends Composite {
+    private static final Color GRADIENT_A = new Color(PlatformUI.getWorkbench().getDisplay(), 37, 183, 196);
+    private static final Color GRADIENT_B = new Color(PlatformUI.getWorkbench().getDisplay(), 37, 196, 129);
 
-        addField(new FileFieldEditor(
-                MetaInfoFile.PREF_KEY_META_INFO_TEMPLATE_WFS,
-                "Meta Info Template for workflow sets:", true,
-                getFieldEditorParent()));
-    }
 
     /**
-     * {@inheritDoc}
+     * @param parent the parent within which this instance will sit
      */
-    @Override
-    public void init(final IWorkbench workbench) {
-        IPreferenceStore prefStore = KNIMEUIPlugin.getDefault().getPreferenceStore();
-        prefStore.setDefault(MetaInfoFile.PREF_KEY_META_INFO_TEMPLATE_WF, "");
-        prefStore.setDefault(MetaInfoFile.PREF_KEY_META_INFO_TEMPLATE_WFS, "");
-        setPreferenceStore(prefStore);
+    public MetanodeMetaView(final Composite parent) {
+        super(parent, SWT.NONE);
+
+        final GridLayout gl = new GridLayout(1, false);
+        gl.marginHeight = 0;
+        gl.marginWidth = 0;
+        setLayout(gl);
+
+        GridData gd = new GridData();
+        gd.horizontalAlignment = SWT.FILL;
+        gd.verticalAlignment = SWT.FILL;
+        gd.grabExcessHorizontalSpace = true;
+        gd.grabExcessVerticalSpace = true;
+        setLayoutData(gd);
+
+        final Composite c = new Composite(this, SWT.NONE);
+        gd = new GridData();
+        gd.horizontalAlignment = SWT.FILL;
+        gd.verticalAlignment = SWT.FILL;
+        gd.grabExcessHorizontalSpace = true;
+        gd.grabExcessVerticalSpace = true;
+        c.setLayoutData(gd);
+        c.addPaintListener((event) -> {
+           final GC gc = event.gc;
+
+           gc.setAdvanced(true);
+           gc.setAntialias(SWT.ON);
+
+           gc.setForeground(GRADIENT_A);
+           gc.setBackground(GRADIENT_B);
+           final Rectangle bounds = c.getClientArea();
+           gc.fillGradientRectangle(bounds.x, bounds.y, bounds.width, bounds.height, true);
+        });
     }
 }

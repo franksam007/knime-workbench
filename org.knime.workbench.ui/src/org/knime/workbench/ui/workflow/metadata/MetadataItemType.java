@@ -1,5 +1,6 @@
 /*
  * ------------------------------------------------------------------------
+ *
  *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
@@ -40,66 +41,62 @@
  *  propagated with or for interoperation with KNIME.  The owner of a Node
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
- * ------------------------------------------------------------------------
+ * ---------------------------------------------------------------------
+ *
+ * History
+ *   May 26, 2019 (loki): created
  */
-package org.knime.workbench.ui.metainfo.editor;
+package org.knime.workbench.ui.workflow.metadata;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.knime.workbench.ui.metainfo.model.MetaGUIElement;
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
+import java.util.HashMap;
 
 /**
+ * An enum representing the different types of known workflow metadata 'atoms'.
  *
- * @author Fabian Dill, KNIME.com AG
+ * @author loki der quaeler
  */
-public class MetaInfoInputHandler extends DefaultHandler {
+public enum MetadataItemType {
+    /** The author metainfo **/
+    AUTHOR("AUTHOR"),
+    /** The description metainfo **/
+    DESCRIPTION("DESCRIPTION"),
+    /** The license metainfo **/
+    LICENSE("LICENSE"),
+    /** The link metainfo **/
+    LINK("LINK"),
+    /** The tag metainfo **/
+    TAG("TAG");
 
 
-    private StringBuffer m_buffer = new StringBuffer();
+    private static final HashMap<String, MetadataItemType> TYPE_ENUM_MAP = new HashMap<>();
 
-    private final List<MetaGUIElement>m_elements
-        = new ArrayList<MetaGUIElement>();
+    private String m_type;
 
-    private String m_currentForm;
-    private String m_currentLabel;
-    private boolean m_isReadOnly;
+    private MetadataItemType(final String type) {
+        m_type = type;
+    }
 
-    @Override
-    public void characters(final char[] ch, final int start, final int length)
-            throws SAXException {
-        m_buffer.append(ch, start, length);
+    /**
+     * @return the value of the 'type' attribute of the serialized metainfo element
+     */
+    public String getType() {
+        return m_type;
     }
 
 
-    @Override
-    public void startElement(final String uri, final String localName, final String name,
-            final Attributes atts) throws SAXException {
-        if (localName.equals(MetaGUIElement.ELEMENT)) {
-            m_currentForm = atts.getValue(MetaGUIElement.FORM);
-            m_currentLabel = atts.getValue(MetaGUIElement.NAME);
-            m_isReadOnly = Boolean.valueOf(
-                    atts.getValue(MetaGUIElement.READ_ONLY));
-
+    /**
+     * @param type the value returned by <code>getType()</code>
+     * @return the instance of the enum or null if none can be found for the provided <code>type</code>
+     */
+    public static MetadataItemType getInfoTypeForType (final String type) {
+        synchronized (TYPE_ENUM_MAP) {
+            if (TYPE_ENUM_MAP.size() == 0) {
+                for (final MetadataItemType it : MetadataItemType.values()) {
+                    TYPE_ENUM_MAP.put(it.getType(), it);
+                }
+            }
         }
+
+        return TYPE_ENUM_MAP.get(type);
     }
-
-    @Override
-    public void endElement(final String uri, final String localName, final String name)
-            throws SAXException {
-        if (localName.equals(MetaGUIElement.ELEMENT)) {
-            m_elements.add(MetaGUIElement.create(m_currentForm, m_currentLabel,
-                    m_buffer.toString(), m_isReadOnly));
-            m_buffer = new StringBuffer();
-        }
-    }
-
-    public List<MetaGUIElement>getElements() {
-        return m_elements;
-    }
-
-
 }
