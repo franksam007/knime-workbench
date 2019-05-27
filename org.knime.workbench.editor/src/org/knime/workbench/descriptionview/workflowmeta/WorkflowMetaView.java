@@ -377,8 +377,29 @@ public class WorkflowMetaView extends Composite implements MetaInfoAtom.Deletion
     }
 
     /**
+     * @return whether the view is currently in edit mode
+     */
+    public boolean inEditMode() {
+        return m_inEditMode.get();
+    }
+
+    /**
+     * If the view is currently in edit mode, the mode is ended with either a save or cancel.
      *
-     * @param selection
+     * @param shouldSave if true, then the model state is committed, otherwise restored.
+     */
+    public void endEditMode(final boolean shouldSave) {
+        if (m_inEditMode.getAndSet(false)) {
+            if (shouldSave) {
+                performSave();
+            } else {
+                performDiscard();
+            }
+        }
+    }
+
+    /**
+     * @param selection the selection passed along from the ISelectionListener
      */
     public void selectionChanged(final IStructuredSelection selection) {
         final IEditorInput iei =
@@ -528,68 +549,70 @@ public class WorkflowMetaView extends Composite implements MetaInfoAtom.Deletion
         layout(true, true);
     }
 
+    private void performSave() {
+        m_inEditMode.set(false);
+
+        // we must commit prior to updating display, else atoms may not longer have their UI elements
+        //      available to query
+        m_modelFacilitator.commitEdit();
+
+        performPostEditModeTransitionActions();
+
+        final Job job = new WorkspaceJob("Saving workflow metadata...") {
+            /**
+             * {@inheritDoc}
+             */
+            @Override
+            public IStatus runInWorkspace(final IProgressMonitor monitor) throws CoreException {
+                try {
+                    m_modelFacilitator.writeMetadata(m_metadataFile);
+                } catch (final IOException e) {
+                    throw new CoreException(new Status(IStatus.ERROR, KNIMEEditorPlugin.PLUGIN_ID, -1,
+                        "Failed to save metadata file.", e));
+                }
+                return Status.OK_STATUS;
+            }
+        };
+        job.setRule(ResourcesPlugin.getWorkspace().getRoot());
+        job.setUser(true);
+        job.schedule();
+    }
+
+    private void performDiscard() {
+        m_inEditMode.set(false);
+
+        // must restore state before updating display to have a display synced to the restored model
+        m_modelFacilitator.restoreState();
+
+        performPostEditModeTransitionActions();
+    }
+
+    private void performPostEditModeTransitionActions() {
+        updateDisplay();
+
+        setHeaderBarButtons();
+
+        m_tagAddTextField = null;
+        m_tagsAddButton = null;
+
+        m_linksAddURLTextField = null;
+        m_linksAddTitleTextField = null;
+        m_linksAddTypeTextField = null;
+        m_linksAddButton = null;
+    }
+
     private void setHeaderBarButtons() {
         SWTUtilities.removeAllChildren(m_headerButtonPane);
 
         if (m_inEditMode.get()) {
             FlatButton fb = new FlatButton(m_headerButtonPane, SWT.PUSH, SAVE_IMAGE, new Point(20, 20), true);
             fb.addClickListener((source) -> {
-                m_inEditMode.set(false);
-
-                // we must commit prior to updating display, else atoms may not longer have their UI elements
-                //      available to query
-                m_modelFacilitator.commitEdit();
-
-                updateDisplay();
-
-                setHeaderBarButtons();
-
-                m_tagAddTextField = null;
-                m_tagsAddButton = null;
-
-                m_linksAddURLTextField = null;
-                m_linksAddTitleTextField = null;
-                m_linksAddTypeTextField = null;
-                m_linksAddButton = null;
-
-                final Job job = new WorkspaceJob("Saving workflow metadata...") {
-                    /**
-                     * {@inheritDoc}
-                     */
-                    @Override
-                    public IStatus runInWorkspace(final IProgressMonitor monitor) throws CoreException {
-                        try {
-                            m_modelFacilitator.writeMetadata(m_metadataFile);
-                        } catch (final IOException e) {
-                            throw new CoreException(new Status(IStatus.ERROR, KNIMEEditorPlugin.PLUGIN_ID, -1,
-                                "Failed to save metadata file.", e));
-                        }
-                        return Status.OK_STATUS;
-                    }
-                };
-                job.setRule(ResourcesPlugin.getWorkspace().getRoot());
-                job.setUser(true);
-                job.schedule();
+                performSave();
             });
 
             fb = new FlatButton(m_headerButtonPane, SWT.PUSH, CANCEL_IMAGE, new Point(20, 20), true);
             fb.addClickListener((source) -> {
-                m_inEditMode.set(false);
-
-                // must restore state before updating display to have a display synced to the restored model
-                m_modelFacilitator.restoreState();
-
-                updateDisplay();
-
-                setHeaderBarButtons();
-
-                m_tagAddTextField = null;
-                m_tagsAddButton = null;
-
-                m_linksAddURLTextField = null;
-                m_linksAddTitleTextField = null;
-                m_linksAddTypeTextField = null;
-                m_linksAddButton = null;
+                performDiscard();
             });
 
             m_headerBar.layout(true, true);

@@ -50,6 +50,7 @@ package org.knime.workbench.descriptionview;
 
 import java.lang.ref.WeakReference;
 
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.SWT;
@@ -57,6 +58,8 @@ import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.IURIEditorInput;
@@ -74,6 +77,11 @@ import org.knime.workbench.editor2.editparts.WorkflowRootEditPart;
  * @author loki der quaeler
  */
 public class DescriptionView extends ViewPart implements ISelectionListener {
+    private static final String MIDST_EDIT_WARNING_TEXT =
+        "You are still editing your workflow's metadata; do you want to save the metadata or discard any changes?";
+    private static final String[] DIALOG_BUTTON_LABELS = {"Save", "Discard"};
+
+
     private StackLayout m_stackLayout;
 
     private HelpView m_nodeDescriptionView;
@@ -133,13 +141,7 @@ public class DescriptionView extends ViewPart implements ISelectionListener {
      */
     @Override
     public void setFocus() {
-        if (m_stackLayout.topControl == m_nodeDescriptionView) {
-            m_nodeDescriptionView.setFocus();
-        } else if (m_stackLayout.topControl == m_workflowMetaView) {
-            m_workflowMetaView.setFocus();
-        } else {
-            m_metanodeMetaView.setFocus();
-        }
+        m_stackLayout.topControl.setFocus();
     }
 
     /**
@@ -156,23 +158,44 @@ public class DescriptionView extends ViewPart implements ISelectionListener {
                 return;
             }
 
-            m_lastSelection = new WeakReference<>(structuredSelection);
+            // in some weird world where we have an edit mode for m_metanodeMetaView, that need be checked here too
+            if ((lastSelection != null) && (lastSelection.getFirstElement() instanceof WorkflowRootEditPart)
+                && m_workflowMetaView.inEditMode()) {
+                final Display d = PlatformUI.getWorkbench().getDisplay();
 
-            if (structuredSelection.getFirstElement() instanceof WorkflowRootEditPart) {
-                final IEditorInput iei = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
-                    .getActiveEditor().getEditorInput();
+                d.asyncExec(() -> {
+                    final Shell s = d.getActiveShell();
+                    final int response = MessageDialog.open(MessageDialog.QUESTION, s, "Wait...",
+                        MIDST_EDIT_WARNING_TEXT, SWT.NONE, DIALOG_BUTTON_LABELS);
+                    final boolean save = (response == 0);
 
-                if (iei instanceof IURIEditorInput) {
-                    moveControlToTop(m_workflowMetaView);
-                    m_workflowMetaView.selectionChanged(structuredSelection);
-                } else {
-                    moveControlToTop(m_metanodeMetaView);
-                    // this is not a thing (yet?) : m_metanodeMetaView.selectionChanged(structuredSelection);
-                }
+                    m_workflowMetaView.endEditMode(save);
+
+                    finishSelectionChange(structuredSelection);
+                });
             } else {
-                moveControlToTop(m_nodeDescriptionView);
-                m_nodeDescriptionView.selectionChanged(structuredSelection);
+                finishSelectionChange(structuredSelection);
             }
+        }
+    }
+
+    private void finishSelectionChange(final IStructuredSelection structuredSelection) {
+        m_lastSelection = new WeakReference<>(structuredSelection);
+
+        if (structuredSelection.getFirstElement() instanceof WorkflowRootEditPart) {
+            final IEditorInput iei = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
+                .getActiveEditor().getEditorInput();
+
+            if (iei instanceof IURIEditorInput) {
+                moveControlToTop(m_workflowMetaView);
+                m_workflowMetaView.selectionChanged(structuredSelection);
+            } else {
+                moveControlToTop(m_metanodeMetaView);
+                // this is not a thing (yet?) : m_metanodeMetaView.selectionChanged(structuredSelection);
+            }
+        } else {
+            moveControlToTop(m_nodeDescriptionView);
+            m_nodeDescriptionView.selectionChanged(structuredSelection);
         }
     }
 }
