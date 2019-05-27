@@ -231,6 +231,8 @@ public class StyledTextEditor extends CellEditor implements AnnotationModeExitEn
 
     private ColorDropDown m_colorDropDown;
 
+    private Point m_mouseDownLocation;
+
     private int m_currentColorSelectionTarget;
 
 
@@ -261,6 +263,13 @@ public class StyledTextEditor extends CellEditor implements AnnotationModeExitEn
         super(parent, style);
 
         disableHandlerWithItalicKeybindingConflict();
+    }
+
+    /**
+     * @param p the location of the mouse click which started the edit using this editor
+     */
+    public void setMouseDownLocation(final Point p) {
+        m_mouseDownLocation = p;
     }
 
     /**
@@ -900,12 +909,21 @@ public class StyledTextEditor extends CellEditor implements AnnotationModeExitEn
     @Override
     protected void doSetFocus() {
         assert m_styledText != null : "Control not created!";
-        String text = m_styledText.getText();
         if (m_selectAllUponFocusGain) {
             performSelectAll();
         }
         m_styledText.setFocus();
-        m_styledText.setCaretOffset(text.length());
+        if (m_mouseDownLocation != null) {
+            final Point parentLocation = m_panel.getLocation();
+            // this is more or less a correct translation - certainly better that the results of SWT's toControl(Point)
+            final Point translatedLocation =
+                new Point((m_mouseDownLocation.x - parentLocation.x), (m_mouseDownLocation.y - parentLocation.y));
+            final int charOffset = m_styledText.getOffsetAtLocation(translatedLocation);
+
+            m_styledText.setCaretOffset(charOffset);
+        } else {
+            m_styledText.setCaretOffset(m_styledText.getCharCount());
+        }
     }
 
     /**
